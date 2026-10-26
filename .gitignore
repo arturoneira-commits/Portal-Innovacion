@@ -1,0 +1,37 @@
+node_modules/
+.next/
+dist/
+build/
+.env
+.env.local
+*.log
+.DS_Store
+
+# Variables de entorno y secretos
+.env*
+!.env.example
+
+# Archivos generados
+coverage/
+.turbo/
+.vercel/
+
+# Archivos temporales creados accidentalmente
+/next
+/web@0.1.0
+
+# Next.js generado
+apps/web/.next/
+apps/web/out/
+
+# Dependencias y artefactos generados
+apps/api/node_modules/
+apps/api/dist/
+apps/api/build/
+/apps/api/.agents/skills/prisma-8/
+
+# Instrucciones auxiliares de herramientas de desarrollo
+/apps/api/.agents/
+/apps/api/.claude/
+/apps/api/.cursor/
+/apps/api/.devin/

@@ -1,0 +1,109 @@
+// use prisma-8
+
+enum RolUsuario {
+  @@type("pg/text@1")
+  ADMINISTRADOR = "administrador"
+  EVALUADOR     = "evaluador"
+  POSTULANTE    = "postulante"
+}
+
+enum EstadoConvocatoria {
+  @@type("pg/text@1")
+  BORRADOR       = "borrador"
+  ABIERTA        = "abierta"
+  CERRADA        = "cerrada"
+  EN_EVALUACION  = "en_evaluacion"
+  ADJUDICADA     = "adjudicada"
+  EN_EJECUCION   = "en_ejecucion"
+  FINALIZADA     = "finalizada"
+  CANCELADA      = "cancelada"
+}
+
+enum EstadoPostulacion {
+  @@type("pg/text@1")
+  ENVIADA     = "enviada"
+  EN_REVISION = "en_revision"
+  APROBADA    = "aprobada"
+  RECHAZADA   = "rechazada"
+}
+
+enum EstadoProyecto {
+  @@type("pg/text@1")
+  EN_EJECUCION = "en_ejecucion"
+  PAUSADO      = "pausado"
+  FINALIZADO   = "finalizado"
+  CANCELADO    = "cancelado"
+}
+
+model HealthCheck {
+  id        String   @id @default(uuid())
+  message   String
+  createdAt DateTime @default(now())
+
+  @@map("health_check")
+}
+
+model Usuario {
+  id        String     @id @default(uuid())
+  nombre    String
+  email     String     @unique
+  rol       RolUsuario @default(POSTULANTE)
+  createdAt DateTime   @default(now())
+
+  convocatoriasResponsable Convocatoria[] @relation("ResponsableConvocatoria")
+  postulaciones            Postulacion[]
+  proyectosResponsable     Proyecto[]     @relation("ResponsableProyecto")
+
+  @@map("usuario")
+}
+
+model Convocatoria {
+  id            String             @id @default(uuid())
+  nombre        String
+  descripcion   String
+  tipo          String
+  responsableId String
+  fechaInicio   DateTime
+  fechaCierre   DateTime
+  estado        EstadoConvocatoria @default(BORRADOR)
+  presupuesto   Float?
+  montoMaximo   Float?
+  createdAt     DateTime           @default(now())
+
+  responsable   Usuario       @relation("ResponsableConvocatoria", fields: [responsableId], references: [id])
+  postulaciones Postulacion[]
+
+  @@map("convocatoria")
+}
+
+model Postulacion {
+  id             String            @id @default(uuid())
+  convocatoriaId String
+  postulanteId   String
+  estado         EstadoPostulacion @default(ENVIADA)
+  fechaEnvio     DateTime          @default(now())
+
+  convocatoria Convocatoria @relation(fields: [convocatoriaId], references: [id])
+  postulante   Usuario      @relation(fields: [postulanteId], references: [id])
+  proyecto     Proyecto?
+
+  @@unique([convocatoriaId, postulanteId])
+  @@map("postulacion")
+}
+
+model Proyecto {
+  id            String         @id @default(uuid())
+  postulacionId String         @unique
+  responsableId String
+  objetivos     String
+  fechaInicio   DateTime
+  fechaFin      DateTime?
+  presupuesto   Float?
+  estado        EstadoProyecto @default(EN_EJECUCION)
+  createdAt     DateTime       @default(now())
+
+  postulacion Postulacion @relation(fields: [postulacionId], references: [id])
+  responsable Usuario     @relation("ResponsableProyecto", fields: [responsableId], references: [id])
+
+  @@map("proyecto")
+}

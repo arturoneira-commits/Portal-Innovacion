@@ -1,0 +1,1296 @@
+{
+  "schemaVersion": "1",
+  "targetFamily": "sql",
+  "target": "postgres",
+  "profileHash": "3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2",
+  "roots": {
+    "convocatoria": {
+      "model": "Convocatoria",
+      "namespace": "public"
+    },
+    "health_check": {
+      "model": "HealthCheck",
+      "namespace": "public"
+    },
+    "postulacion": {
+      "model": "Postulacion",
+      "namespace": "public"
+    },
+    "proyecto": {
+      "model": "Proyecto",
+      "namespace": "public"
+    },
+    "usuario": {
+      "model": "Usuario",
+      "namespace": "public"
+    }
+  },
+  "domain": {
+    "namespaces": {
+      "public": {
+        "enum": {
+          "EstadoConvocatoria": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "BORRADOR",
+                "value": "borrador"
+              },
+              {
+                "name": "ABIERTA",
+                "value": "abierta"
+              },
+              {
+                "name": "CERRADA",
+                "value": "cerrada"
+              },
+              {
+                "name": "EN_EVALUACION",
+                "value": "en_evaluacion"
+              },
+              {
+                "name": "ADJUDICADA",
+                "value": "adjudicada"
+              },
+              {
+                "name": "EN_EJECUCION",
+                "value": "en_ejecucion"
+              },
+              {
+                "name": "FINALIZADA",
+                "value": "finalizada"
+              },
+              {
+                "name": "CANCELADA",
+                "value": "cancelada"
+              }
+            ]
+          },
+          "EstadoPostulacion": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "ENVIADA",
+                "value": "enviada"
+              },
+              {
+                "name": "EN_REVISION",
+                "value": "en_revision"
+              },
+              {
+                "name": "APROBADA",
+                "value": "aprobada"
+              },
+              {
+                "name": "RECHAZADA",
+                "value": "rechazada"
+              }
+            ]
+          },
+          "EstadoProyecto": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "EN_EJECUCION",
+                "value": "en_ejecucion"
+              },
+              {
+                "name": "PAUSADO",
+                "value": "pausado"
+              },
+              {
+                "name": "FINALIZADO",
+                "value": "finalizado"
+              },
+              {
+                "name": "CANCELADO",
+                "value": "cancelado"
+              }
+            ]
+          },
+          "RolUsuario": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "ADMINISTRADOR",
+                "value": "administrador"
+              },
+              {
+                "name": "EVALUADOR",
+                "value": "evaluador"
+              },
+              {
+                "name": "POSTULANTE",
+                "value": "postulante"
+              }
+            ]
+          }
+        },
+        "models": {
+          "Convocatoria": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "descripcion": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "estado": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EstadoConvocatoria",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "fechaCierre": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "fechaInicio": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "montoMaximo": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
+              "nombre": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "presupuesto": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
+              "responsableId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "tipo": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "postulaciones": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "convocatoriaId"
+                  ]
+                },
+                "to": {
+                  "model": "Postulacion",
+                  "namespace": "public"
+                }
+              },
+              "responsable": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "responsableId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "descripcion": {
+                  "column": "descripcion"
+                },
+                "estado": {
+                  "column": "estado"
+                },
+                "fechaCierre": {
+                  "column": "fechaCierre"
+                },
+                "fechaInicio": {
+                  "column": "fechaInicio"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "montoMaximo": {
+                  "column": "montoMaximo"
+                },
+                "nombre": {
+                  "column": "nombre"
+                },
+                "presupuesto": {
+                  "column": "presupuesto"
+                },
+                "responsableId": {
+                  "column": "responsableId"
+                },
+                "tipo": {
+                  "column": "tipo"
+                }
+              },
+              "namespaceId": "public",
+              "table": "convocatoria"
+            }
+          },
+          "HealthCheck": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "message": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {},
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "message": {
+                  "column": "message"
+                }
+              },
+              "namespaceId": "public",
+              "table": "health_check"
+            }
+          },
+          "Postulacion": {
+            "fields": {
+              "convocatoriaId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "estado": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EstadoPostulacion",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "fechaEnvio": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "postulanteId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "convocatoria": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "convocatoriaId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Convocatoria",
+                  "namespace": "public"
+                }
+              },
+              "postulante": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "postulanteId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              },
+              "proyecto": {
+                "cardinality": "1:1",
+                "nullable": true,
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "postulacionId"
+                  ]
+                },
+                "to": {
+                  "model": "Proyecto",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "convocatoriaId": {
+                  "column": "convocatoriaId"
+                },
+                "estado": {
+                  "column": "estado"
+                },
+                "fechaEnvio": {
+                  "column": "fechaEnvio"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "postulanteId": {
+                  "column": "postulanteId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "postulacion"
+            }
+          },
+          "Proyecto": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "estado": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "EstadoProyecto",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
+              "fechaFin": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "fechaInicio": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "objetivos": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "postulacionId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "presupuesto": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
+              "responsableId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "postulacion": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "postulacionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Postulacion",
+                  "namespace": "public"
+                }
+              },
+              "responsable": {
+                "cardinality": "N:1",
+                "nullable": false,
+                "on": {
+                  "localFields": [
+                    "responsableId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Usuario",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "estado": {
+                  "column": "estado"
+                },
+                "fechaFin": {
+                  "column": "fechaFin"
+                },
+                "fechaInicio": {
+                  "column": "fechaInicio"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "objetivos": {
+                  "column": "objetivos"
+                },
+                "postulacionId": {
+                  "column": "postulacionId"
+                },
+                "presupuesto": {
+                  "column": "presupuesto"
+                },
+                "responsableId": {
+                  "column": "responsableId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "proyecto"
+            }
+          },
+          "Usuario": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "kind": "scalar"
+                }
+              },
+              "email": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "nombre": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "rol": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "RolUsuario",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              }
+            },
+            "relations": {
+              "convocatoriasResponsable": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "responsableId"
+                  ]
+                },
+                "to": {
+                  "model": "Convocatoria",
+                  "namespace": "public"
+                }
+              },
+              "postulaciones": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "postulanteId"
+                  ]
+                },
+                "to": {
+                  "model": "Postulacion",
+                  "namespace": "public"
+                }
+              },
+              "proyectosResponsable": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "responsableId"
+                  ]
+                },
+                "to": {
+                  "model": "Proyecto",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "email": {
+                  "column": "email"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "nombre": {
+                  "column": "nombre"
+                },
+                "rol": {
+                  "column": "rol"
+                }
+              },
+              "namespaceId": "public",
+              "table": "usuario"
+            }
+          }
+        }
+      }
+    }
+  },
+  "storage": {
+    "namespaces": {
+      "public": {
+        "entries": {
+          "table": {
+            "convocatoria": {
+              "checks": [
+                {
+                  "expression": "\"estado\" IN ('borrador', 'abierta', 'cerrada', 'en_evaluacion', 'adjudicada', 'en_ejecucion', 'finalizada', 'cancelada')",
+                  "name": "convocatoria_estado_check_5e1c097b",
+                  "prefix": "convocatoria_estado_check"
+                }
+              ],
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "descripcion": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "estado": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "borrador"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EstadoConvocatoria",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "fechaCierre": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "fechaInicio": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "montoMaximo": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": true
+                },
+                "nombre": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "presupuesto": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": true
+                },
+                "responsableId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "tipo": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "responsableId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "convocatoria"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuario"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "responsableId"
+                  ],
+                  "name": "convocatoria_responsableId_idx_6e04eceb",
+                  "prefix": "convocatoria_responsableId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "health_check": {
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "message": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": []
+            },
+            "postulacion": {
+              "checks": [
+                {
+                  "expression": "\"estado\" IN ('enviada', 'en_revision', 'aprobada', 'rechazada')",
+                  "name": "postulacion_estado_check_01006596",
+                  "prefix": "postulacion_estado_check"
+                }
+              ],
+              "columns": {
+                "convocatoriaId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "estado": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "enviada"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EstadoPostulacion",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "fechaEnvio": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "postulanteId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "convocatoriaId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "postulacion"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "convocatoria"
+                  }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "postulanteId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "postulacion"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuario"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "convocatoriaId"
+                  ],
+                  "name": "postulacion_convocatoriaId_idx_3d3ab6dc",
+                  "prefix": "postulacion_convocatoriaId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "postulanteId"
+                  ],
+                  "name": "postulacion_postulanteId_idx_11d2081d",
+                  "prefix": "postulacion_postulanteId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "convocatoriaId",
+                    "postulanteId"
+                  ]
+                }
+              ]
+            },
+            "proyecto": {
+              "checks": [
+                {
+                  "expression": "\"estado\" IN ('en_ejecucion', 'pausado', 'finalizado', 'cancelado')",
+                  "name": "proyecto_estado_check_6a16d10a",
+                  "prefix": "proyecto_estado_check"
+                }
+              ],
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "estado": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "en_ejecucion"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "EstadoProyecto",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                },
+                "fechaFin": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "fechaInicio": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "objetivos": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "postulacionId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "presupuesto": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": true
+                },
+                "responsableId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "postulacionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "proyecto"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "postulacion"
+                  }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "responsableId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "proyecto"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "usuario"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "responsableId"
+                  ],
+                  "name": "proyecto_responsableId_idx_6e04eceb",
+                  "prefix": "proyecto_responsableId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "postulacionId"
+                  ]
+                }
+              ]
+            },
+            "usuario": {
+              "checks": [
+                {
+                  "expression": "\"rol\" IN ('administrador', 'evaluador', 'postulante')",
+                  "name": "usuario_rol_check_a47c4736",
+                  "prefix": "usuario_rol_check"
+                }
+              ],
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-temporal@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "email": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "nombre": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "rol": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "postulante"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "RolUsuario",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
+                }
+              },
+              "foreignKeys": [],
+              "indexes": [],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "email"
+                  ]
+                }
+              ]
+            }
+          },
+          "valueSet": {
+            "EstadoConvocatoria": {
+              "kind": "valueSet",
+              "values": [
+                "borrador",
+                "abierta",
+                "cerrada",
+                "en_evaluacion",
+                "adjudicada",
+                "en_ejecucion",
+                "finalizada",
+                "cancelada"
+              ]
+            },
+            "EstadoPostulacion": {
+              "kind": "valueSet",
+              "values": [
+                "enviada",
+                "en_revision",
+                "aprobada",
+                "rechazada"
+              ]
+            },
+            "EstadoProyecto": {
+              "kind": "valueSet",
+              "values": [
+                "en_ejecucion",
+                "pausado",
+                "finalizado",
+                "cancelado"
+              ]
+            },
+            "RolUsuario": {
+              "kind": "valueSet",
+              "values": [
+                "administrador",
+                "evaluador",
+                "postulante"
+              ]
+            }
+          }
+        },
+        "id": "public",
+        "kind": "postgres-schema"
+      }
+    },
+    "storageHash": "d97648fd7baf9f55328e17e4805bb9087c23bce6c0f13927b2bd426a7e7d9b38"
+  },
+  "execution": {
+    "executionHash": "330750f6c16a93e8e84eb44758a334f13442ee857ca2f8cb3ed3306b1b180cb3",
+    "mutations": {
+      "defaults": [
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "convocatoria"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "health_check"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "postulacion"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "proyecto"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "usuario"
+          }
+        }
+      ]
+    }
+  },
+  "capabilities": {
+    "postgres": {
+      "distinctOn": true,
+      "jsonAgg": true,
+      "lateral": true,
+      "limit": true,
+      "orderBy": true,
+      "returning": true
+    },
+    "sql": {
+      "checkConstraint": true,
+      "defaultInInsert": true,
+      "enums": true,
+      "insertOnConflictSkip": true,
+      "insertOnConflictWithoutTarget": true,
+      "lateral": true,
+      "returning": true,
+      "scalarList": true
+    }
+  },
+  "extensions": {},
+  "meta": {},
+  "_generated": {
+    "warning": "⚠️  GENERATED FILE - DO NOT EDIT",
+    "message": "This file is automatically generated by \"prisma contract emit\".",
+    "regenerate": "To regenerate, run: prisma contract emit"
+  }
+}

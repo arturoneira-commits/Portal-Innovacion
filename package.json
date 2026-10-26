@@ -1,0 +1,8 @@
+{
+  "name": "portalvcm",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
