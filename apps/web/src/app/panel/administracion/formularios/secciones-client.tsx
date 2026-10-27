@@ -24,11 +24,9 @@ export default function SeccionesClient() {
   const [descripcion, setDescripcion] = useState("");
 
   const cargarSecciones = useCallback(async () => {
-    setCargando(true);
-    setError("");
-
     const supabase = createSupabaseBrowserClient();
     const { data: usuario } = await supabase.auth.getUser();
+    setError("");
 
     if (!usuario.user) {
       setError("Tu sesión no está activa. Inicia sesión nuevamente.");
@@ -61,7 +59,11 @@ export default function SeccionesClient() {
   }, []);
 
   useEffect(() => {
-    void cargarSecciones();
+    const temporizador = window.setTimeout(() => {
+      void cargarSecciones();
+    }, 0);
+
+    return () => window.clearTimeout(temporizador);
   }, [cargarSecciones]);
 
   function limpiarFormulario() {

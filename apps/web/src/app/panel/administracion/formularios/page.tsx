@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SeccionesClient from "./secciones-client";
+import CamposClient from "./campos-client";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
@@ -7,11 +8,17 @@ export const dynamic = "force-dynamic";
 
 export default async function AdministracionFormularios() {
   const supabase = await createSupabaseServerClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
   if (authError || !user) redirect("/login");
 
-  const { data: esGestor, error } = await supabase.rpc("es_gestor_formulario");
+  const { data: esGestor, error } = await supabase.rpc(
+    "es_gestor_formulario",
+  );
 
   if (error || esGestor !== true) redirect("/panel");
 
@@ -31,13 +38,24 @@ export default async function AdministracionFormularios() {
         </h1>
 
         <p className="mt-4 max-w-2xl leading-relaxed text-slate">
-          Desde aquí configuraremos las secciones, los campos y las opciones
-          disponibles en el formulario de iniciativas. Esta pantalla inicial
-          confirma el acceso; todavía no modifica el formulario utilizado por
-          los docentes.
+          Configura las secciones y los campos disponibles para los formularios
+          de iniciativas. Estos cambios se administran por separado del
+          formulario que utilizan actualmente los docentes.
         </p>
 
-        <SeccionesClient />
+        <section className="mt-10">
+          <h2 className="mb-4 font-serif text-2xl text-navy">
+            1. Secciones del formulario
+          </h2>
+          <SeccionesClient />
+        </section>
+
+        <section className="mt-12 border-t border-slate/20 pt-8">
+          <h2 className="mb-4 font-serif text-2xl text-navy">
+            2. Campos del formulario
+          </h2>
+          <CamposClient />
+        </section>
       </div>
     </main>
   );

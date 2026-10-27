@@ -49,7 +49,6 @@ export default function SeguimientoIniciativa({
   const [error, setError] = useState("");
 
   const cargarRegistros = useCallback(async () => {
-    setCargando(true);
     const supabase = createSupabaseBrowserClient();
     const { data, error: consultaError } = await supabase
       .from("seguimientos_iniciativas")
@@ -69,7 +68,11 @@ export default function SeguimientoIniciativa({
   }, [iniciativaId]);
 
   useEffect(() => {
-    void cargarRegistros();
+    const temporizador = window.setTimeout(() => {
+      void cargarRegistros();
+    }, 0);
+
+    return () => window.clearTimeout(temporizador);
   }, [cargarRegistros]);
 
   async function guardarSeguimiento(event: FormEvent<HTMLFormElement>) {

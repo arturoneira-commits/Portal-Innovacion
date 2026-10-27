@@ -10,6 +10,26 @@ type Props = {
   params: Promise<{ id: string }>;
 };
 
+type CampoConfigurado = {
+  clave: string;
+  etiqueta: string;
+};
+
+function formatearRespuesta(valor: unknown): string {
+  if (Array.isArray(valor)) {
+    return valor.map(String).filter(Boolean).join("\n") || "Sin información registrada.";
+  }
+
+  if (valor === true) return "Sí";
+  if (valor === false) return "No";
+  if (valor === null || valor === undefined || valor === "") {
+    return "Sin información registrada.";
+  }
+
+  return String(valor);
+}
+
+
 export default async function DetalleIniciativa({ params }: Props) {
   const { id } = await params;
   const supabase = await createSupabaseServerClient();
@@ -26,7 +46,7 @@ export default async function DetalleIniciativa({ params }: Props) {
   const { data: iniciativa, error } = await supabase
     .from("iniciativas")
     .select(
-      "id, nombre, descripcion, responsables, unidad_academica, objetivos, estado, etapa, creado_en"
+      "id, nombre, descripcion, responsables, unidad_academica, objetivos, estado, etapa, creado_en, respuestas_adicionales"
     )
     .eq("id", id)
     .maybeSingle();
@@ -51,6 +71,38 @@ export default async function DetalleIniciativa({ params }: Props) {
   if (!iniciativa) {
     notFound();
   }
+
+
+  const { data: camposConfigurados, error: errorCampos } = await supabase
+    .from("campos_formulario")
+    .select("clave, etiqueta")
+    .eq("activo", true)
+    .order("orden");
+
+  if (errorCampos) {
+    console.error("Error al cargar etiquetas de campos adicionales:", errorCampos.message);
+  }
+
+  const etiquetasPorClave = new Map(
+    ((camposConfigurados ?? []) as CampoConfigurado[]).map((campo) => [
+      campo.clave,
+      campo.etiqueta,
+    ]),
+  );
+
+  const respuestasGuardadas = iniciativa.respuestas_adicionales;
+  const respuestasAdicionales =
+    respuestasGuardadas &&
+    typeof respuestasGuardadas === "object" &&
+    !Array.isArray(respuestasGuardadas)
+      ? (respuestasGuardadas as Record<string, unknown>)
+      : {};
+
+  const camposAdicionales = Object.entries(respuestasAdicionales).map(([clave, valor]) => ({
+    clave,
+    etiqueta: etiquetasPorClave.get(clave) ?? clave.replaceAll("_", " "),
+    contenido: formatearRespuesta(valor),
+  }));
 
   const campos = [
     { titulo: "Descripción", contenido: iniciativa.descripcion },
@@ -110,7 +162,23 @@ export default async function DetalleIniciativa({ params }: Props) {
             ))}
           </section>
 
-          <SeguimientoIniciativa iniciativaId={iniciativa.id} />
+          {camposAdicionales.length > 0 && (
+           <section className="mt-8 border border-navy/15 bg-white p-5 sm:p-6">
+             <h2 className="font-serif text-2xl text-navy">Campos adicionales</h2>
+             <dl className="mt-5 space-y-5">
+               {camposAdicionales.map((campo) => (
+                 <div key={campo.clave}>
+                   <dt className="text-sm font-medium text-navy">{campo.etiqueta}</dt>
+                   <dd className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate">
+                     {campo.contenido}
+                   </dd>
+                 </div>
+               ))}
+             </dl>
+           </section>
+         )}
+
+         <SeguimientoIniciativa iniciativaId={iniciativa.id} />
 
           <p className="mt-6 text-sm text-slate">
             Fecha de creación:{" "}

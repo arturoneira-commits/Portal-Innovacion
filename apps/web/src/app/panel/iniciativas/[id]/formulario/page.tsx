@@ -21,6 +21,95 @@ type Seccion = {
   campos: Campo[];
 };
 
+type TipoCampoDinamico =
+  | "texto"
+  | "texto_largo"
+  | "numero"
+  | "fecha"
+  | "seleccion"
+  | "casilla"
+  | "lista";
+
+type SeccionDinamica = {
+  id: string;
+  titulo: string;
+  orden: number;
+};
+
+type CampoDinamico = {
+  id: string;
+  seccion_id: string;
+  clave: string;
+  etiqueta: string;
+  tipo: TipoCampoDinamico;
+  opciones: unknown;
+  requerido: boolean;
+  orden: number;
+};
+
+type RespuestaDinamica = string | boolean | string[];
+type RespuestasDinamicas = Record<string, RespuestaDinamica>;
+
+function opcionesDe(campo: CampoDinamico): string[] {
+  return Array.isArray(campo.opciones)
+    ? campo.opciones.filter((opcion): opcion is string => typeof opcion === "string")
+    : [];
+}
+
+function prepararRespuestas(
+  campos: CampoDinamico[],
+  existentes: Record<string, unknown>,
+): RespuestasDinamicas {
+  return campos.reduce<RespuestasDinamicas>((resultado, campo) => {
+    const valor = existentes[campo.clave];
+
+    if (campo.tipo === "casilla") {
+      resultado[campo.clave] = valor === true;
+    } else if (campo.tipo === "lista") {
+      resultado[campo.clave] = Array.isArray(valor)
+        ? valor.filter((item): item is string => typeof item === "string")
+        : [];
+    } else if (valor === null || valor === undefined) {
+      resultado[campo.clave] = "";
+    } else {
+      resultado[campo.clave] = String(valor);
+    }
+
+    return resultado;
+  }, {});
+}
+
+function tieneRespuestaDinamica(campo: CampoDinamico, valor: RespuestaDinamica | undefined) {
+  if (campo.tipo === "casilla") return valor === true;
+  if (campo.tipo === "lista") {
+    return Array.isArray(valor) && valor.some((item) => item.trim() !== "");
+  }
+
+  return typeof valor === "string" && valor.trim() !== "";
+}
+
+function normalizarRespuestas(
+  campos: CampoDinamico[],
+  respuestas: RespuestasDinamicas,
+): Record<string, string | number | boolean | string[]> {
+  return campos.reduce<Record<string, string | number | boolean | string[]>>((resultado, campo) => {
+    const valor = respuestas[campo.clave];
+
+    if (campo.tipo === "casilla") {
+      resultado[campo.clave] = valor === true;
+    } else if (campo.tipo === "lista") {
+      resultado[campo.clave] = Array.isArray(valor)
+        ? valor.map((item) => item.trim()).filter(Boolean)
+        : [];
+    } else {
+      const texto = typeof valor === "string" ? valor.trim() : "";
+      resultado[campo.clave] = campo.tipo === "numero" && texto !== "" ? Number(texto) : texto;
+    }
+
+    return resultado;
+  }, {});
+}
+
 const secciones: Seccion[] = [
   {
     titulo: "1. Identificación",
@@ -147,6 +236,9 @@ export default function FormularioIniciativa() {
   const [guardando, setGuardando] = useState(false);
   const [mensaje, setMensaje] = useState("");
   const [esError, setEsError] = useState(false);
+  const [seccionesDinamicas, setSeccionesDinamicas] = useState<SeccionDinamica[]>([]);
+  const [camposDinamicos, setCamposDinamicos] = useState<CampoDinamico[]>([]);
+  const [respuestasDinamicas, setRespuestasDinamicas] = useState<RespuestasDinamicas>({});
 
   useEffect(() => {
     let activo = true;
@@ -161,7 +253,7 @@ export default function FormularioIniciativa() {
           return;
         }
 
-        const columnas = Object.keys(camposIniciales).join(", ");
+        const columnas = `${Object.keys(camposIniciales).join(", ")}, respuestas_adicionales`;
         const { data, error } = await supabase
           .from("iniciativas")
           .select(columnas)
@@ -191,7 +283,37 @@ export default function FormularioIniciativa() {
           }
         }
 
-        if (activo) setDatos(resultado);
+        const [{ data: seccionesBD, error: errorSecciones }, { data: camposBD, error: errorCampos }] =
+          await Promise.all([
+            supabase
+              .from("secciones_formulario")
+              .select("id, titulo, orden")
+              .eq("activa", true)
+              .order("orden"),
+            supabase
+              .from("campos_formulario")
+              .select("id, seccion_id, clave, etiqueta, tipo, opciones, requerido, orden")
+              .eq("activo", true)
+              .order("orden"),
+          ]);
+
+        if (errorSecciones) throw errorSecciones;
+        if (errorCampos) throw errorCampos;
+
+        if (activo) {
+          const respuestasGuardadas = (data as unknown as Record<string, unknown>)
+            .respuestas_adicionales;
+          const respuestasExistentes =
+            respuestasGuardadas && typeof respuestasGuardadas === "object" && !Array.isArray(respuestasGuardadas)
+              ? (respuestasGuardadas as Record<string, unknown>)
+              : {};
+          const camposActivos = (camposBD ?? []) as CampoDinamico[];
+
+          setDatos(resultado);
+          setSeccionesDinamicas((seccionesBD ?? []) as SeccionDinamica[]);
+          setCamposDinamicos(camposActivos);
+          setRespuestasDinamicas(prepararRespuestas(camposActivos, respuestasExistentes));
+        }
       } catch (e) {
         if (activo) {
           setEsError(true);
@@ -210,12 +332,39 @@ export default function FormularioIniciativa() {
     setDatos((actual) => ({ ...actual, [campo]: valor }));
   }
 
+  function cambiarRespuestaDinamica(clave: string, valor: RespuestaDinamica) {
+    setRespuestasDinamicas((actual) => ({ ...actual, [clave]: valor }));
+  }
+
   async function guardarSeccion() {
     setGuardando(true);
     setMensaje("");
     setEsError(false);
 
     try {
+      const esSeccionDinamica = seccion === secciones.length;
+
+      if (esSeccionDinamica) {
+        const campoPendiente = camposDinamicos.find(
+          (campo) => campo.requerido && !tieneRespuestaDinamica(campo, respuestasDinamicas[campo.clave]),
+        );
+
+        if (campoPendiente) {
+          throw new Error(`Completa el campo obligatorio: ${campoPendiente.etiqueta}.`);
+        }
+
+        const supabase = createSupabaseBrowserClient();
+        const { error } = await supabase
+          .from("iniciativas")
+          .update({ respuestas_adicionales: normalizarRespuestas(camposDinamicos, respuestasDinamicas) })
+          .eq("id", id);
+
+        if (error) throw error;
+
+        setMensaje("Se guardaron los campos adicionales correctamente.");
+        return;
+      }
+
       const actual = secciones[seccion];
       const actualizados: Record<string, unknown> = {};
 
@@ -270,7 +419,8 @@ export default function FormularioIniciativa() {
     }
   }
 
-  const actual = secciones[seccion];
+  const esSeccionDinamica = seccion === secciones.length;
+  const actual = secciones[seccion] ?? { titulo: "Campos adicionales", campos: [] };
   const claseCampo =
     "mt-2 w-full border border-navy/20 bg-white px-4 py-3 text-navy outline-none focus:border-navy";
   const claseEtiqueta = "block text-sm font-medium text-navy";
@@ -315,6 +465,17 @@ export default function FormularioIniciativa() {
                 {item.titulo}
               </button>
             ))}
+            <button
+              type="button"
+              onClick={() => { setSeccion(secciones.length); setMensaje(""); }}
+              className={`border px-3 py-3 text-left text-sm ${
+                esSeccionDinamica
+                  ? "border-navy bg-navy text-white"
+                  : "border-navy/15 bg-white text-navy hover:bg-navy/5"
+              }`}
+            >
+              Campos adicionales
+            </button>
           </nav>
 
           {mensaje && (
@@ -328,7 +489,7 @@ export default function FormularioIniciativa() {
           <section className="mt-6 border border-navy/15 bg-white p-6 sm:p-8">
             <h2 className="font-serif text-2xl text-navy">{actual.titulo}</h2>
             <div className="mt-6 grid grid-cols-1 gap-6">
-              {actual.campos.map((campo) => (
+              {!esSeccionDinamica && actual.campos.map((campo) => (
                 <div key={campo.id}>
                   <label htmlFor={campo.id} className={claseEtiqueta}>
                     {campo.label}{campo.required ? " *" : ""}
@@ -377,6 +538,93 @@ export default function FormularioIniciativa() {
                   )}
                 </div>
               ))}
+
+              {esSeccionDinamica && (
+                <>
+                  {seccionesDinamicas.map((seccionDinamica) => {
+                    const camposDeSeccion = camposDinamicos.filter(
+                      (campo) => campo.seccion_id === seccionDinamica.id,
+                    );
+
+                    if (camposDeSeccion.length === 0) return null;
+
+                    return (
+                      <div key={seccionDinamica.id} className="space-y-6 border-t border-navy/10 pt-6 first:border-t-0 first:pt-0">
+                        <h3 className="font-serif text-xl text-navy">{seccionDinamica.titulo}</h3>
+
+                        {camposDeSeccion.map((campo) => {
+                          const valor = respuestasDinamicas[campo.clave];
+                          const idCampo = `dinamico-${campo.id}`;
+
+                          return (
+                            <div key={campo.id}>
+                              <label htmlFor={idCampo} className={claseEtiqueta}>
+                                {campo.etiqueta}{campo.requerido ? " *" : ""}
+                              </label>
+
+                              {campo.tipo === "texto_largo" ? (
+                                <textarea
+                                  id={idCampo}
+                                  className={claseCampo}
+                                  rows={5}
+                                  value={typeof valor === "string" ? valor : ""}
+                                  onChange={(event) => cambiarRespuestaDinamica(campo.clave, event.target.value)}
+                                />
+                              ) : campo.tipo === "seleccion" ? (
+                                <select
+                                  id={idCampo}
+                                  className={claseCampo}
+                                  value={typeof valor === "string" ? valor : ""}
+                                  onChange={(event) => cambiarRespuestaDinamica(campo.clave, event.target.value)}
+                                >
+                                  <option value="">Selecciona una opción</option>
+                                  {opcionesDe(campo).map((opcion) => (
+                                    <option key={opcion} value={opcion}>{opcion}</option>
+                                  ))}
+                                </select>
+                              ) : campo.tipo === "casilla" ? (
+                                <label className="mt-3 flex items-center gap-3 text-sm text-slate" htmlFor={idCampo}>
+                                  <input
+                                    id={idCampo}
+                                    type="checkbox"
+                                    checked={valor === true}
+                                    onChange={(event) => cambiarRespuestaDinamica(campo.clave, event.target.checked)}
+                                  />
+                                  Sí, confirmo esta respuesta.
+                                </label>
+                              ) : campo.tipo === "lista" ? (
+                                <textarea
+                                  id={idCampo}
+                                  className={claseCampo}
+                                  rows={5}
+                                  value={Array.isArray(valor) ? valor.join("\n") : ""}
+                                  onChange={(event) => cambiarRespuestaDinamica(
+                                    campo.clave,
+                                    event.target.value.split("\n"),
+                                  )}
+                                  placeholder="Escribe un elemento por línea"
+                                />
+                              ) : (
+                                <input
+                                  id={idCampo}
+                                  className={claseCampo}
+                                  type={campo.tipo === "numero" ? "number" : campo.tipo === "fecha" ? "date" : "text"}
+                                  value={typeof valor === "string" ? valor : ""}
+                                  onChange={(event) => cambiarRespuestaDinamica(campo.clave, event.target.value)}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+
+                  {camposDinamicos.length === 0 && (
+                    <p className="text-sm text-slate">No hay campos adicionales activos.</p>
+                  )}
+                </>
+              )}
             </div>
 
             <div className="mt-8 flex flex-wrap gap-3 border-t border-navy/10 pt-6">
@@ -397,7 +645,7 @@ export default function FormularioIniciativa() {
                   Sección anterior
                 </button>
               )}
-              {seccion < secciones.length - 1 ? (
+              {seccion < secciones.length ? (
                 <button
                   type="button"
                   onClick={() => { setSeccion(seccion + 1); setMensaje(""); }}
